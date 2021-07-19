@@ -1,0 +1,185 @@
+<?php
+
+/**
+ * @file
+ * Contains dgi_members.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\views\ViewExecutable;
+use Drupal\node\NodeInterface;
+use Drupal\islandora\IslandoraUtils;
+
+/**
+ * Implements hook_help().
+ */
+function dgi_members_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the dgi_members module.
+    case 'help.page.dgi_members':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Facilitates display of compounds objects') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_views_pre_render().
+ */
+function dgi_members_views_pre_render(ViewExecutable $view) {
+  if (isset($view) && ($view->id() == 'compound_navigation')) {
+    $members = dgi_members_get_members();
+    $active = dgi_members_newspapers_get_active();
+    $active_node_id = $active->id();
+    $view->element['#attached']['library'][] = 'dgi_members/compound_parts';
+    $view->element['#attached']['drupalSettings']['dgi_members']['has_members']
+      = (empty($members) || !$members) ? FALSE : TRUE;
+    $view->element['#attached']['drupalSettings']['dgi_members']['active_nid']
+      = $active_node_id;
+  }
+}
+
+/**
+ * Implements hook_entity_view_mode_alter().
+ */
+function dgi_members_entity_view_mode_alter(&$view_mode, $entity) {
+  // Change the view mode based on user input from a 'view_mode_alter'.
+  // This is very similar to the implementation of this hook in the core
+  // islandora module. The difference here is that we are only allowing the view
+  // mode to be switched away from a known view mode,
+  // (repository_item_top_viewer), and if the entity (node) being processed
+  // differs from the menu route object, evaluations are allowed to continue if
+  // said node is a member of the menu router object.
+  if ($view_mode == "repository_item_top_viewer") {
+    $storage = \Drupal::service('entity_type.manager')->getStorage('entity_view_mode');
+    $context_manager = \Drupal::service('context.manager');
+    $current_entity = \Drupal::routeMatch()->getParameter('node');
+    $current_id = ($current_entity instanceof NodeInterface) ? $current_entity->id() : NULL;
+    if (isset($current_id) && $current_id == $entity->id() || dgi_members_entity_is_member($entity)) {
+      foreach ($context_manager->getActiveReactions('\Drupal\islandora\Plugin\ContextReaction\ViewModeAlterReaction') as $reaction) {
+        // Construct the new view mode's machine name.
+        $entity_type = $entity->getEntityTypeId();
+        $mode = $reaction->execute();
+        $machine_name = "$entity_type.$mode";
+
+        // Try to load it.
+        $new_mode = $storage->load($machine_name);
+
+        // If successful, alter the view mode.
+        if ($new_mode) {
+          $view_mode = $mode;
+        }
+        else {
+          // Otherwise, leave it be, but log a message.
+          \Drupal::logger('dgi_members')
+            ->info("EntityViewMode $machine_name does not exist.  View mode cannot be altered.");
+        }
+      }
+    }
+  }
+}
+
+function dgi_members_entity_is_member($entity) {
+  if ($entity) {
+    $members = dgi_members_get_members();
+    if (in_array($entity->id(), $members)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+function dgi_members_views_pre_view(ViewExecutable $view, $display_id, array &$args) {
+  if (dgi_members_is_compound()) {
+    $active_member = dgi_members_get_active();
+    if ($active_member) {
+      // Update Metadata args.
+      if ($view->id() == "repository_item_metadata" && $view->current_display == 'block_2') {
+        $view->args[0] = $active_member->id();
+      }
+
+      // Update technical metadata.
+      if ($view->id() == 'technical_metadata') {
+        $view->args[0] = $active_member->id();
+      }
+
+      // Updated download file block.
+      if ($view->id() == "download_original_file") {
+        $view->args[0] = $active_member->id();
+      }
+    }
+  }
+}
+
+function dgi_members_is_compound() {
+  // Get the node object from the visited page.
+  // If the page is not a node detail page, it'll return FALSE.
+  $node = \Drupal::request()->attributes->get('node');
+  if (!$node) {
+    return FALSE;
+  }
+
+  return dgi_members_node_has_model_term("Compound Object", $node);
+}
+
+function dgi_members_node_has_model_term($term_name, $node) {
+  $field_name = 'field_model';
+
+  if (isset($node)) {
+    // Let's make sure the node has the field.
+    if ($node && $node->hasField($field_name)) {
+      $referenced_entities = $node->get($field_name)->referencedEntities();
+      foreach ($referenced_entities as $term) {
+        if ($term->getName() == $term_name) {
+          return TRUE;
+        }
+      }
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Retrieve the active member, if available.
+ *
+ * @return bool||Node
+ *   FALSE if no node available, or the active Node.
+ */
+function dgi_members_get_active() {
+  $active_member = \Drupal::request()->query->get('active_member');
+  if ($active_member) {
+    return \Drupal::entityTypeManager()->getStorage('node')->load($active_member);
+  }
+
+  $nodes = dgi_members_get_members();
+
+  if (empty($nodes)) {
+    return FALSE;
+  }
+
+  return \Drupal::entityTypeManager()->getStorage('node')->load(reset($nodes));
+}
+
+/**
+ * Return members of the menu route object.
+ *
+ * @return bool||array
+ *   FALSE if no member available, indexed array of members otherwise.
+ */
+function dgi_members_get_members() {
+  $entity = \Drupal::routeMatch()->getParameter('node');
+
+  if (!$entity) {
+    return FALSE;
+  }
+
+  $nodes = \Drupal::entityTypeManager()->getStorage('node')
+    ->getQuery()
+    ->condition('field_member_of', $entity->id())
+    ->sort('field_weight', 'ASC')
+    ->execute();
+  return $nodes;
+}
