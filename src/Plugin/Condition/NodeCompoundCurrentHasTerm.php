@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\dgi_compounds_newspapers\Plugin\Condition;
+namespace Drupal\dgi_members\Plugin\Condition;
 
 use Drupal\Core\Condition\ConditionPluginBase;
 use Drupal\Core\Entity\EntityInterface;
@@ -179,7 +179,6 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
     if ($node && $data) {
       return TRUE;
     }
-
     return FALSE;
   }
 

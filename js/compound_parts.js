@@ -70,7 +70,6 @@
     },
 
     updateActiveMetadataDisplay: function() {
-      // alert(has_members);
       if (drupalSettings.dgi_members.has_members) {
         $(".compound-object-metadata").addClass('hidden');
         $('.object-metadata.element-compound').removeClass('element-active');
