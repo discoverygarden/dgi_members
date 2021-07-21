@@ -11,7 +11,7 @@ use Drupal\islandora\IslandoraUtils;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Provides a Compound member 'Term' condition for nodes.
+ * Provides an object member 'Term' condition for nodes.
  *
  * @Condition(
  *   id = "node_compound_current_has_term",

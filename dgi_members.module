@@ -9,6 +9,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\views\ViewExecutable;
 use Drupal\node\NodeInterface;
 use Drupal\islandora\IslandoraUtils;
+use Drupal\Core\Entity\EntityInterface;
 
 /**
  * Implements hook_help().
@@ -48,7 +49,7 @@ function dgi_members_views_pre_render(ViewExecutable $view) {
 /**
  * Implements hook_entity_view_mode_alter().
  */
-function dgi_members_entity_view_mode_alter(&$view_mode, $entity) {
+function dgi_members_entity_view_mode_alter(&$view_mode, EntityInterface $entity) {
   // Change the view mode based on user input from a 'view_mode_alter'.
   // This is very similar to the implementation of this hook in the core
   // islandora module. The difference here is that we are only allowing the view
@@ -88,12 +89,13 @@ function dgi_members_entity_view_mode_alter(&$view_mode, $entity) {
 /**
  * Determine if the view mode entity is a member of the menu router object.
  *
- * @param $entity
+ * @param Drupal\Core\Entity\EntityInterface $entity
  *   A node to evaluate.
+ *
  * @return bool
  *   TRUE if is a member, FALSE if not.
  */
-function dgi_members_entity_is_member($entity) {
+function dgi_members_entity_is_member(EntityInterface $entity) {
   if ($entity) {
     $members = dgi_members_get_members();
     if (in_array($entity->id(), $members)) {
