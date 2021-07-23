@@ -7,8 +7,6 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\views\ViewExecutable;
-use Drupal\node\NodeInterface;
-use Drupal\islandora\IslandoraUtils;
 use Drupal\Core\Entity\EntityInterface;
 
 /**
@@ -60,9 +58,7 @@ function dgi_members_entity_view_mode_alter(&$view_mode, EntityInterface $entity
   if ($view_mode == "repository_item_top_viewer") {
     $storage = \Drupal::service('entity_type.manager')->getStorage('entity_view_mode');
     $context_manager = \Drupal::service('context.manager');
-    $current_entity = \Drupal::routeMatch()->getParameter('node');
-    $current_id = ($current_entity instanceof NodeInterface) ? $current_entity->id() : NULL;
-    if (isset($current_id) && $current_id == $entity->id() || dgi_members_entity_is_member($entity)) {
+    if (dgi_members_entity_is_member($entity)) {
       foreach ($context_manager->getActiveReactions('\Drupal\islandora\Plugin\ContextReaction\ViewModeAlterReaction') as $reaction) {
         // Construct the new view mode's machine name.
         $entity_type = $entity->getEntityTypeId();

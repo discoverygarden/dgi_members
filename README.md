@@ -21,14 +21,14 @@ further information.
 
 #### Compound Objects
 This module would typically be used to create a display for compound objects. The included
-condition will evaluate a compounds first member (by order of weight on the 'Members' section),
+condition will evaluate a compound's first member (by order of weight on the 'Members' section),
 or by the provided query param (should be 'active_member').
 * Create a compound object display if one does not already exist, by configuring a new condition
 to to evaluate if node has term ('Node has term with URI => 'Compound Object', for example).
-* Configure each islandora display's on the context page (such as 'Open Seadragon', 'PDFjs Viewer', etc.)
-to also evaluate this modules provided condition, 'Compound active member node has term with URI',
+* Configure each islandora display on the context page (such as 'Open Seadragon', 'PDFjs Viewer', etc.)
+to also evaluate this module's provided condition, 'Compound active member node has term with URI',
 checking for the same term present on the child object (either first member sorted by weight, or
-the node id from a query param, should be 'active_member').
+the node ID from a query param, should be 'active_member').
 * Add a new contextual filter to the 'Repository Item: Top Viewer' display in the 'Repository Item Content Blocks'
 view of 'Content: Collection(s)'.
 * Change the 'Pager' settings to only show a specific number of items, 1.

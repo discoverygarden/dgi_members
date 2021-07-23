@@ -1,10 +1,10 @@
 /**
  * @file
+ * Contains client side logic for dgi_members.
  */
 
 (function ($, Drupal, drupalSettings) {
   'use strict';
-  let searchParams = new URLSearchParams(window.location.search);
 
   Drupal.behaviors.compound_members = {
     attach: function (context, settings) {
@@ -15,34 +15,41 @@
       $(document).once('compound_controller_update_active').each(this.updateActiveMetadataDisplay());
     },
 
-    toggleSpinner: function() {
+    /**
+     * Toggle on or off the ajax spinner.
+     */
+    toggleSpinner: function () {
       var toggle_element = ".multi-object-navigation header i";
       $(toggle_element).toggleClass('visually-hidden');
       $(".multi-object-navigation .view-content.solr-search-row-content").toggleClass('ajax-active');
     },
 
-    ajaxBegin: function() {
-      $(document).ajaxSend(function(event, xhr, settings){
+    /**
+     * Attach event to ajaxSend to toggle the ajax spinner.
+     */
+    ajaxBegin: function () {
+      $(document).ajaxSend(function (event, xhr, settings) {
         if (settings.url.startsWith("/views/ajax?")) {
           Drupal.behaviors.compound_members.toggleSpinner();
         }
       });
     },
 
-    ajaxComplete: function() {
-      $(document).ajaxComplete(function(event, xhr, settings){
-        if (settings.url.startsWith("/views/ajax?")) {
-          // Drupal.behaviors.compound_members.toggleSidebar();
-        }
-      });
-    },
-
+    /**
+     * Construct the metadata toggle elements.
+     *
+     * @returns {string}
+     *   HTML Markup representing the toggle elements.
+     */
     toggleSwitch: function () {
         return "<span class='metadata-toggle'><a href='#' class='object-metadata part-metadata'>" + Drupal.t("Part") + "</a><a href='#' class='object-metadata element-compound'>" + Drupal.t("Compound") + "</a></span>"
     },
 
+    /**
+     * Attach click handlers to the different metadata displays.
+     */
     metadataToggleClick: function () {
-      $(this).on('click', function(e) {
+      $(this).on('click', function (e) {
         e.preventDefault();
         $('.object-metadata').removeClass('element-active');
 
@@ -59,6 +66,9 @@
       });
     },
 
+    /**
+     * Append the metadata labels to each panel.
+     */
     appendLabels: function () {
       $(".compound-object-metadata").find('.panel-heading').append(
         Drupal.behaviors.compound_members.toggleSwitch()
@@ -69,7 +79,13 @@
       );
     },
 
-    updateActiveMetadataDisplay: function() {
+    /**
+     * Update the active member, displaying the proper metadata for the active object.
+     *
+     * This will also update the '.active-node-{ID}' where it is found on the page,
+     * including in the compound navigator block and the 'Parts' sidebar block.
+     */
+    updateActiveMetadataDisplay: function () {
       if (drupalSettings.dgi_members.has_members) {
         $(".compound-object-metadata").addClass('hidden');
         $('.object-metadata.element-compound').removeClass('element-active');
@@ -81,8 +97,6 @@
       }
 
       $(".active-node-" + drupalSettings.dgi_members.active_nid).closest('div.views-row').addClass('active-member');
-
     }
-
   };
 })(jQuery, Drupal, drupalSettings);
