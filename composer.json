@@ -1,0 +1,16 @@
+{
+    "name": "dgi_members",
+    "type": "drupal-module",
+    "description": "Facilitates display of compounds objects",
+    "keywords": [
+    ],
+    "homepage": "https://www.drupal.org/project/dgi_members",
+    "minimum-stability": "dev",
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/dgi_members",
+        "source": "http://cgit.drupalcode.org/dgi_members"
+    },
+    "require": {
+        "islandora/islandora": "^1"
+    }
+}
