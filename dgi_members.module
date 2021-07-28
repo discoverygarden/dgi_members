@@ -45,6 +45,21 @@ function dgi_members_views_pre_render(ViewExecutable $view) {
 }
 
 /**
+ * Implements hook_form_form_id_alter().
+ */
+function dgi_members_form_block_form_alter(&$form, $form_state, $form_id) {
+  // In following with how Islandora core is handling block visibility,
+  // implementing this hook to unset our custom condition. There's too many to
+  // use well within the core block placement UI, and no other reasonable way to
+  // filter them out. See https://www.drupal.org/node/2284687. Use
+  // /admin/structure/context instead if you want to use these conditions
+  // to alter block layout.
+  // This hook is also doing the same thing in Islandora core, to hide the
+  // conditions it provides.
+  unset($form['visibility']['node_compound_current_has_term']);
+}
+
+/**
  * Implements hook_entity_view_mode_alter().
  */
 function dgi_members_entity_view_mode_alter(&$view_mode, EntityInterface $entity) {
