@@ -9,7 +9,6 @@
   Drupal.behaviors.compound_members = {
     attach: function (context, settings) {
       $(document).once('compound_controller_ajax_begin').each(this.ajaxBegin);
-      $(document).once('compound_controller_ajax_complete').each(this.ajaxComplete);
       $(document).once('compound_controller_add_labels').each(this.appendLabels);
       $(".object-metadata").once('compound_controller_click_callback').each(this.metadataToggleClick);
       $(document).once('compound_controller_update_active').each(this.updateActiveMetadataDisplay());
