@@ -4,6 +4,6 @@
     "license": "GPL-3.0-only",
     "description": "Facilitates display of compounds objects",
     "require": {
-        "islandora/islandora": "^1"
+        "islandora/islandora": "^1 || ^2"
     }
 }
