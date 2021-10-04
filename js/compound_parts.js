@@ -11,7 +11,7 @@
       $(document).once('compound_controller_ajax_begin').each(this.ajaxBegin);
       $(document).once('compound_controller_add_labels').each(this.appendLabels);
       $(".object-metadata").once('compound_controller_click_callback').each(this.metadataToggleClick);
-      $(document).once('compound_controller_update_active').each(this.updateActiveMetadataDisplay());
+      $(document).once('compound_controller_update_active').each(this.updateActiveMetadataDisplay);
     },
 
     /**
@@ -94,6 +94,8 @@
         $('.object-metadata.element-compound').addClass('element-active');
         $('.object-metadata.part-metadata').removeClass('element-active');
       }
+
+      console.log(drupalSettings.dgi_members);
 
       $(".active-node-" + drupalSettings.dgi_members.active_nid).closest('div.views-row').addClass('active-member');
     }
