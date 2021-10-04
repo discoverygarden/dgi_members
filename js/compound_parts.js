@@ -95,8 +95,6 @@
         $('.object-metadata.part-metadata').removeClass('element-active');
       }
 
-      console.log(drupalSettings.dgi_members);
-
       $(".active-node-" + drupalSettings.dgi_members.active_nid).closest('div.views-row').addClass('active-member');
     }
   };
