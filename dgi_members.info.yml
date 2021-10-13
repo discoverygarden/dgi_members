@@ -1,7 +1,7 @@
 name: 'DGI Members'
 type: module
 description: 'Facilitates display of compounds objects'
-core: 8.x
+core_version_requirement: ^8 || ^9
 package: 'DGI'
 dependencies:
-  - islandora
+  - islandora:islandora
