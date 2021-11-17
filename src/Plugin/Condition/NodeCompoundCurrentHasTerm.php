@@ -84,7 +84,11 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
    */
   public function defaultConfiguration() {
     return array_merge(
-      ['logic' => 'and'],
+      [
+        'logic' => 'and',
+        'uri' => NULL,
+        'param' => '',
+      ],
       parent::defaultConfiguration()
     );
   }
@@ -137,7 +141,6 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     // Set URI for term if possible.
-    $this->configuration['uri'] = NULL;
     $value = $form_state->getValue('term');
     $uris = [];
     if (!empty($value)) {
@@ -167,9 +170,7 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
     if (empty($this->configuration['uri']) && !$this->isNegated()) {
       return TRUE;
     }
-
     $node = $this->retrieveActiveMember();
-
     if (!$node) {
       return FALSE;
     }
@@ -190,6 +191,7 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
    */
   protected function retrieveActiveMember() {
     $active_member_param = \Drupal::request()->query->get($this->configuration['param']);
+
     if ($active_member_param) {
       $active_member = $this->entityTypeManager->getStorage('node')->load($active_member_param);
       if ($active_member) {
