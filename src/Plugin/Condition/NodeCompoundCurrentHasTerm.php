@@ -167,9 +167,11 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
    * {@inheritdoc}
    */
   public function evaluate() {
+
     if (empty($this->configuration['uri']) && !$this->isNegated()) {
       return TRUE;
     }
+
     $node = $this->retrieveActiveMember();
     if (!$node) {
       return FALSE;
@@ -191,7 +193,6 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
    */
   protected function retrieveActiveMember() {
     $active_member_param = \Drupal::request()->query->get($this->configuration['param']);
-
     if ($active_member_param) {
       $active_member = $this->entityTypeManager->getStorage('node')->load($active_member_param);
       if ($active_member) {
