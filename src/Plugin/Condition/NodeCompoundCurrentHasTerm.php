@@ -84,7 +84,11 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
    */
   public function defaultConfiguration() {
     return array_merge(
-      ['logic' => 'and'],
+      [
+        'logic' => 'and',
+        'uri' => NULL,
+        'param' => '',
+      ],
       parent::defaultConfiguration()
     );
   }
@@ -137,7 +141,6 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     // Set URI for term if possible.
-    $this->configuration['uri'] = NULL;
     $value = $form_state->getValue('term');
     $uris = [];
     if (!empty($value)) {
@@ -164,12 +167,12 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
    * {@inheritdoc}
    */
   public function evaluate() {
+
     if (empty($this->configuration['uri']) && !$this->isNegated()) {
       return TRUE;
     }
 
     $node = $this->retrieveActiveMember();
-
     if (!$node) {
       return FALSE;
     }
