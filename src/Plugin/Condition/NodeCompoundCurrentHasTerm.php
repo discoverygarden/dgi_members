@@ -9,6 +9,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\islandora\IslandoraUtils;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\dgi_members\DgiMembersEntityOperations;
 
 /**
  * Provides an object member 'Term' condition for nodes.
@@ -38,6 +39,13 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
   protected $entityTypeManager;
 
   /**
+   * Member operations utility helper.
+   *
+   * @var \Drupal\dgi_members\DgiMembersEntityOperations
+   */
+  protected $dgiMembersEntityOperations;
+
+  /**
    * Constructor.
    *
    * @param array $configuration
@@ -53,17 +61,21 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
    *   Islandora utils.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   Entity type manager.
+   * @param \Drupal\dgi_members\DgiMembersEntityOperations $dgiMembersEntityOperations
+   *   Member entity operation helper utilities.
    */
   public function __construct(
     array $configuration,
     $plugin_id,
     $plugin_definition,
     IslandoraUtils $utils,
-    EntityTypeManagerInterface $entity_type_manager
+    EntityTypeManagerInterface $entity_type_manager,
+    DgiMembersEntityOperations $dgiMembersEntityOperations
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->utils = $utils;
     $this->entityTypeManager = $entity_type_manager;
+    $this->dgiMembersEntityOperations = $dgiMembersEntityOperations;
   }
 
   /**
@@ -75,7 +87,8 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
       $plugin_id,
       $plugin_definition,
       $container->get('islandora.utils'),
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('dgi_members.entity_service')
     );
   }
 
@@ -172,7 +185,10 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
       return TRUE;
     }
 
-    $node = $this->retrieveActiveMember();
+    $node = $this->dgiMembersEntityOperations->retrieveActiveMember(
+      $this->configuration['uri']
+    );
+
     if (!$node) {
       return FALSE;
     }
@@ -183,49 +199,6 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
       return TRUE;
     }
     return FALSE;
-  }
-
-  /**
-   * Retrieve the first member of the given object or the node from url param.
-   *
-   * @return bool||node
-   *   FALSE if unable to retrieve an active member, or the member if present.
-   */
-  protected function retrieveActiveMember() {
-    $active_member_param = \Drupal::request()->query->get($this->configuration['param']);
-    if ($active_member_param) {
-      $active_member = $this->entityTypeManager->getStorage('node')->load($active_member_param);
-      if ($active_member) {
-        return $active_member;
-      }
-      return FALSE;
-    }
-
-    return $this->retrieveFirstOfMembers();
-  }
-
-  /**
-   * Retrieve the first member of the contextual 'Node'.
-   *
-   * @return bool||Node
-   *   FALSE if the member could not be retrieved, or the member object.
-   */
-  protected function retrieveFirstOfMembers() {
-    $entity = $this->getContextValue('node');
-    if (!$entity) {
-      return FALSE;
-    }
-    $nodes = $this->entityTypeManager
-      ->getStorage('node')
-      ->getQuery()
-      ->condition('field_member_of', $entity->id())
-      ->sort('field_weight', 'ASC')
-      ->execute();
-
-    if (empty($nodes)) {
-      return FALSE;
-    }
-    return $this->entityTypeManager->getStorage('node')->load(reset($nodes));
   }
 
   /**

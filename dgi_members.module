@@ -128,13 +128,16 @@ function dgi_members_get_active() {
     return \Drupal::entityTypeManager()->getStorage('node')->load($active_member);
   }
 
-  $nodes = dgi_members_get_members();
+  if (\Drupal::service('dgi_members.entity_service')->pageEntityIsCompoundObjectNode()) {
+    $nodes = \Drupal::service('dgi_members.entity_service')->membersQueryExecute();
 
-  if (empty($nodes)) {
-    return FALSE;
+    if (empty($nodes)) {
+      return FALSE;
+    }
+
+    return \Drupal::entityTypeManager()->getStorage('node')->load(reset($nodes));
   }
-
-  return \Drupal::entityTypeManager()->getStorage('node')->load(reset($nodes));
+  return FALSE;
 }
 
 /**
@@ -144,16 +147,5 @@ function dgi_members_get_active() {
  *   FALSE if no member available, indexed array of members otherwise.
  */
 function dgi_members_get_members() {
-  $entity = \Drupal::routeMatch()->getParameter('node');
-
-  if (!$entity) {
-    return FALSE;
-  }
-
-  $nodes = \Drupal::entityTypeManager()->getStorage('node')
-    ->getQuery()
-    ->condition('field_member_of', $entity->id())
-    ->sort('field_weight', 'ASC')
-    ->execute();
-  return $nodes;
+  return \Drupal::service('dgi_members.entity_service')->membersQueryExecute();
 }
