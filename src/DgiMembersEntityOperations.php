@@ -9,9 +9,9 @@ use Drupal\islandora\IslandoraUtils;
 use Drupal\node\Entity\Node;
 
 /**
- * Class CurrentGroup.
+ * Class DgiMembersEntityOperations.
  *
- * Get the current group an entity belongs to.
+ * Utility service to perform compound object related operations.
  */
 class DgiMembersEntityOperations {
 
@@ -41,7 +41,7 @@ class DgiMembersEntityOperations {
    *
    * @var string
    */
-  public static $compoundUri = "http://vocab.getty.edu/aat/300242735";
+  const COMPOUND_URI = "http://vocab.getty.edu/aat/300242735";
 
   /**
    * Http Request stack.
@@ -51,7 +51,7 @@ class DgiMembersEntityOperations {
   protected $requestStack;
 
   /**
-   * CurrentGroup constructor.
+   * DgiMembersEntityOperations constructor.
    *
    * @param \Drupal\Core\Routing\RouteMatchInterface $routeMatch
    *   Current route match.
@@ -107,7 +107,7 @@ class DgiMembersEntityOperations {
         return FALSE;
       }
 
-      if (count(array_intersect([DgiMembersEntityOperations::$compoundUri], $haystack)) > 0) {
+      if (count(array_intersect([DgiMembersEntityOperations::COMPOUND_URI], $haystack)) > 0) {
         return TRUE;
       }
     }
