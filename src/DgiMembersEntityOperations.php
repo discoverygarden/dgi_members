@@ -6,7 +6,8 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\islandora\IslandoraUtils;
-use Drupal\node\Entity\Node;
+use Drupal\node\NodeInterface;
+use Drupal\taxonomy\TermInterface;
 
 /**
  * Class DgiMembersEntityOperations.
@@ -78,39 +79,36 @@ class DgiMembersEntityOperations {
    */
   public function pageEntityIsCompoundObjectNode() {
     $entity = $this->routeMatch->getParameter('node');
-    if ($entity instanceof Node) {
+    if ($entity instanceof NodeInterface) {
+      if ($entity->hasField($this->islandoraUtils::MODEL_FIELD) && !$entity->get($this->islandoraUtils::MODEL_FIELD)->isEmpty()) {
 
-      // Find the terms on the node.
-      $field_names = $this->islandoraUtils->getUriFieldNamesForTerms();
-      $terms = array_filter($entity->referencedEntities(), function ($entity) use ($field_names) {
-        if ($entity->getEntityTypeId() != 'taxonomy_term') {
-          return FALSE;
-        }
+        // Retrieve the 'model' term of the given page entity.
+        $term = $entity
+          ->get($this->islandoraUtils::MODEL_FIELD)
+          ->first()
+          ->get('entity')
+          ->getTarget()
+          ->getValue();
 
-        foreach ($field_names as $field_name) {
-          if ($entity->hasField($field_name) && !$entity->get($field_name)->isEmpty()) {
-            return TRUE;
+        // Ensure the 'term' is of an instance we expect, exists, and has a
+        // value before proceeding.
+        if ($term instanceof TermInterface) {
+          if ($term->hasField($this->islandoraUtils::EXTERNAL_URI_FIELD) && !$term->get($this->islandoraUtils::EXTERNAL_URI_FIELD)->isEmpty()) {
+
+            // Retrieve term info for evaluation.
+            $term_info = $term
+              ->get($this->islandoraUtils::EXTERNAL_URI_FIELD)
+              ->first()
+              ->getValue();
+
+            if ($term_info && $term_info['uri'] == DgiMembersEntityOperations::COMPOUND_URI) {
+              return TRUE;
+            }
           }
         }
-        return FALSE;
-      });
-
-      // Get their URIs.
-      $haystack = array_map(function ($term) {
-        return $this->islandoraUtils->getUriForTerm($term);
-      },
-        $terms
-      );
-
-      // FALSE if there's no URIs on the node.
-      if (empty($haystack)) {
-        return FALSE;
-      }
-
-      if (count(array_intersect([DgiMembersEntityOperations::COMPOUND_URI], $haystack)) > 0) {
-        return TRUE;
       }
     }
+
     return FALSE;
   }
 
@@ -134,7 +132,6 @@ class DgiMembersEntityOperations {
     if ($this->pageEntityIsCompoundObjectNode()) {
       return $this->retrieveFirstOfMembers();
     }
-
     return FALSE;
   }
 
@@ -157,7 +154,7 @@ class DgiMembersEntityOperations {
   /**
    * Retrieve 'members' of the current page object.
    *
-   * @return BOOL|array
+   * @return bool|array
    *   An array of members for the given page object, or FALSE if none found.
    */
   public function membersQueryExecute() {
@@ -171,7 +168,7 @@ class DgiMembersEntityOperations {
       ->getStorage('node')
       ->getQuery()
       ->condition('field_member_of', $entity->id())
-      ->sort('field_weight', 'ASC')
+      ->sort('field_weight')
       ->execute();
   }
 
