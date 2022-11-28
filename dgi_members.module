@@ -128,7 +128,7 @@ function dgi_members_get_active() {
     return \Drupal::entityTypeManager()->getStorage('node')->load($active_member);
   }
 
-  if (\Drupal::service('dgi_members.entity_service')->pageEntityIsCompoundObjectNode()) {
+  if (\Drupal::service('dgi_members.entity_service')->nodeFromRouteIsCompound()) {
     $nodes = \Drupal::service('dgi_members.entity_service')->membersQueryExecute();
 
     if (empty($nodes)) {

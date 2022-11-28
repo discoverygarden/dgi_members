@@ -21,21 +21,21 @@ class DgiMembersEntityOperations {
    *
    * @var \Drupal\Core\Routing\RouteMatchInterface
    */
-  protected $routeMatch;
+  protected RouteMatchInterface $routeMatch;
 
   /**
    * Instance of config factory.
    *
    * @var \Drupal\islandora\IslandoraUtils
    */
-  protected $islandoraUtils;
+  protected IslandoraUtils $islandoraUtils;
 
   /**
    * Entity Type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $entityTypeManager;
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * Static compound URI.
@@ -47,9 +47,9 @@ class DgiMembersEntityOperations {
   /**
    * Http Request stack.
    *
-   * @var Symfony\Component\HttpFoundation\RequestStack
+   * @var \Symfony\Component\HttpFoundation\RequestStack
    */
-  protected $requestStack;
+  protected RequestStack $requestStack;
 
   /**
    * DgiMembersEntityOperations constructor.
@@ -71,13 +71,13 @@ class DgiMembersEntityOperations {
   }
 
   /**
-   * Confirm a page related object has the 'Compound Object' term.
+   * Confirm the routeMatch node parameter has the 'Compound Object' term.
    *
    * @return bool
    *   TRUE if the current node in the route is a compound object, FALSE
    *   otherwise.
    */
-  public function pageEntityIsCompoundObjectNode() {
+  public function nodeFromRouteIsCompound() {
     $entity = $this->routeMatch->getParameter('node');
     if ($entity instanceof NodeInterface) {
       if ($entity->hasField($this->islandoraUtils::MODEL_FIELD) && !$entity->get($this->islandoraUtils::MODEL_FIELD)->isEmpty()) {
@@ -115,7 +115,7 @@ class DgiMembersEntityOperations {
   /**
    * Retrieve the first member of the given object or the node from url param.
    *
-   * @return bool||node
+   * @return bool|NodeInterface
    *   FALSE if unable to retrieve an active member, or the member if present.
    */
   public function retrieveActiveMember($url_param = NULL) {
@@ -129,7 +129,7 @@ class DgiMembersEntityOperations {
       }
     }
 
-    if ($this->pageEntityIsCompoundObjectNode()) {
+    if ($this->nodeFromRouteIsCompound()) {
       return $this->retrieveFirstOfMembers();
     }
     return FALSE;
@@ -138,7 +138,7 @@ class DgiMembersEntityOperations {
   /**
    * Retrieve the first member of the contextual 'Node'.
    *
-   * @return bool||Node
+   * @return bool|NodeInterface
    *   FALSE if the member could not be retrieved, or the member object.
    */
   public function retrieveFirstOfMembers() {
