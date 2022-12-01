@@ -186,7 +186,7 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
     }
 
     $node = $this->dgiMembersEntityOperations->retrieveActiveMember(
-      $this->configuration['uri']
+      $this->configuration['param']
     );
 
     if (!$node) {
