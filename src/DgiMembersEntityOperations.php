@@ -164,12 +164,20 @@ class DgiMembersEntityOperations {
       return FALSE;
     }
 
-    return $this->entityTypeManager
+    $make_entity_also_first_member = FALSE;
+
+    $to_return = $this->entityTypeManager
       ->getStorage('node')
       ->getQuery()
       ->condition('field_member_of', $entity->id())
       ->sort('field_weight')
       ->execute();
+
+    if ($make_entity_also_first_member) {
+      // Allow current entity to present as the first member of itself.
+    }
+
+    return $to_return;
   }
 
 }
