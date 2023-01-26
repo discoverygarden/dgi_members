@@ -8,6 +8,7 @@
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\views\ViewExecutable;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\node\NodeInterface;
 
 /**
  * Implements hook_help().
@@ -29,6 +30,49 @@ function dgi_members_help($route_name, RouteMatchInterface $route_match) {
  * Implements hook_views_pre_render().
  */
 function dgi_members_views_pre_render(ViewExecutable $view) {
+  // XXX: Messing with some views results for displaying non-compound compound
+  // objects. This is not generally applicable, but a quick fix kind of
+  // adjustment to allow some objects to display similarly to functionality
+  // available in i7 that allows for child objects on non-compound objects,
+  // where the display allowed one node to behave as the parent and display as
+  // the first child of its set.
+  if (
+    dgi_members_treat_parent_as_first_sibling()
+    &&
+    isset($view)
+    &&
+    (
+      (
+        ($view->id() == 'manage_members')
+        &&
+        ($view->current_display == 'block_1')
+      )
+      ||
+      ($view->id() == 'compound_navigation')
+    )
+  ) {
+    $k = 0;
+    $temp = [];
+    $entity_id = (int)$view->argument['field_member_of_target_id']->argument;
+    foreach ($view->result as $key => $value) {
+      if ($k == 0) {
+        $entity = \Drupal::entityTypeManager()
+          ->getStorage('node')
+          ->load($entity_id);
+        $first_result = new $value();
+        $first_result->_entity = $entity;
+        $first_result->index = $k;
+        $first_result->nid = $entity_id;
+        $temp[] = $first_result;
+        $k++;
+      }
+      $value->index = $k;
+      $temp[] = $value;
+      $k++;
+    }
+    $view->result = $temp;
+  }
+
   if (isset($view) && ($view->id() == 'compound_navigation')) {
     $members = dgi_members_get_members();
     $active = dgi_members_get_active();
@@ -148,4 +192,39 @@ function dgi_members_get_active() {
  */
 function dgi_members_get_members() {
   return \Drupal::service('dgi_members.entity_service')->membersQueryExecute();
+}
+
+/**
+ * Return whether or not to treat parent as first child.
+ *
+ * This was expected behaviour configurable in i7, and allowing this display
+ * option is, in some cases, more desirable than a massive restructuring of
+ * migrated content.
+ *
+ * @return bool
+ *   Default to FALSE for standard Compound Object behaviour.
+ *   TRUE if the capability to treat objects as a member of themselves is
+ *   desired.
+ */
+function dgi_members_treat_parent_as_first_sibling() {
+  // TEST VALUE SHORTCUT FOR DEV WORK IN PROGRESS.
+  return TRUE;
+}
+
+/**
+ * Return whether to treat this entity as a Compound Object or not.
+ *
+ * This is related to dgi_members_treat_parent_as_first_sibling(), but could be
+ * expanded to be relevant in a separate use case in the future.
+ *
+ * @param NodeInterface
+ *
+ * @return bool
+ *   Default to FALSE for standard Compound Object behaviour.
+ *   TRUE if object without the 'Compound Object' value in the 'Content Type'
+ *   (model) field should still be treated as a Compound Object.
+ */
+function dgi_members_entity_understood_as_compound(NodeInterface $entity) {
+  // TEST VALUE SHORTCUT FOR DEV WORK IN PROGRESS.
+  return TRUE;
 }

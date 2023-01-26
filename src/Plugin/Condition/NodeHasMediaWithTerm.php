@@ -4,6 +4,7 @@ namespace Drupal\dgi_members\Plugin\Condition;
 
 use Drupal\Core\Condition\ConditionPluginBase;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\media\MediaInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -12,17 +13,17 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\dgi_members\DgiMembersEntityOperations;
 
 /**
- * Provides an object member 'Term' condition for nodes.
+ * A condition to check if a node has media with a specified term.
  *
  * @Condition(
- *   id = "node_compound_current_has_term",
- *   label = @Translation("Compound active member node has term with URI"),
+ *   id = "node_has_media_with_term",
+ *   label = @Translation("Current node has media that has term with URI"),
  *   context_definitions = {
  *     "node" = @ContextDefinition("entity:node", required = TRUE , label = @Translation("node"))
  *   }
  * )
  */
-class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements ContainerFactoryPluginInterface {
+class NodeHasMediaWithTerm extends ConditionPluginBase implements ContainerFactoryPluginInterface {
 
   /**
    * Islandora utils.
@@ -100,7 +101,6 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
       [
         'logic' => 'and',
         'uri' => NULL,
-        'param' => '',
       ],
       parent::defaultConfiguration()
     );
@@ -120,20 +120,12 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
 
     $form['term'] = [
       '#type' => 'entity_autocomplete',
-      '#title' => $this->t('Compound Member Term'),
+      '#title' => $this->t('Media Term'),
       '#description' => $this->t('Only terms that have external URIs/URLs will appear here.'),
       '#tags' => TRUE,
       '#default_value' => $default,
       '#target_type' => 'taxonomy_term',
       '#selection_handler' => 'islandora:external_uri',
-    ];
-
-    $form['param'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('URL Parameter'),
-      '#description' => $this->t('The url parameter to indicate which member is active. If omitted, the first member ordered by weight will always be assumed.'),
-      '#default_value' => $this->configuration['param'],
-      '#required' => FALSE,
     ];
 
     $form['logic'] = [
@@ -171,7 +163,6 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
     }
 
     $this->configuration['logic'] = $form_state->getValue('logic');
-    $this->configuration['param'] = $form_state->getValue('param');
 
     parent::submitConfigurationForm($form, $form_state);
   }
@@ -185,38 +176,40 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
       return TRUE;
     }
 
-    $node = $this->dgiMembersEntityOperations->retrieveActiveMember(
-      $this->configuration['param']
-    );
+    $node = $this->getContextValue('node');
 
     if (!$node) {
       return FALSE;
     }
 
-    $data = $this->evaluateEntity($node);
-    if ($node && $data) {
+    $media = $this->utils->getMedia($node);
+
+    $data = $this->evaluateMedia($media);
+    if (!empty($media) && $data) {
       return TRUE;
     }
     return FALSE;
   }
 
   /**
-   * Evaluates if an entity has the specified term(s).
+   * Evaluates if a media entity has the specified term(s).
    *
-   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param array of MediaInterface $media
    *   The entity to evalute.
    *
    * @return bool
    *   TRUE if entity has all the specified term(s), otherwise FALSE.
    */
-  protected function evaluateEntity(EntityInterface $entity) {
-    foreach ($entity->referencedEntities() as $referenced_entity) {
-      if ($referenced_entity->getEntityTypeId() == 'taxonomy_term' && $referenced_entity->hasField(IslandoraUtils::EXTERNAL_URI_FIELD)) {
-        $field = $referenced_entity->get(IslandoraUtils::EXTERNAL_URI_FIELD);
-        if (!$field->isEmpty()) {
-          $link = $field->first()->getValue();
-          if ($link['uri'] == $this->configuration['uri']) {
-            return $this->isNegated() ? FALSE : TRUE;
+  protected function evaluateMedia(array $media) {
+    foreach ($media as $entity) {
+      foreach ($entity->referencedEntities() as $referenced_entity) {
+        if ($referenced_entity->getEntityTypeId() == 'taxonomy_term' && $referenced_entity->hasField(IslandoraUtils::EXTERNAL_URI_FIELD)) {
+          $field = $referenced_entity->get(IslandoraUtils::EXTERNAL_URI_FIELD);
+          if (!$field->isEmpty()) {
+            $link = $field->first()->getValue();
+            if ($link['uri'] == $this->configuration['uri']) {
+              return $this->isNegated() ? FALSE : TRUE;
+            }
           }
         }
       }
@@ -230,10 +223,10 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
    */
   public function summary() {
     if (!empty($this->configuration['negate'])) {
-      return $this->t('The node is not associated with taxonomy term with uri @uri.', ['@uri' => $this->configuration['uri']]);
+      return $this->t('The media associated with this node is not associated with taxonomy term with uri @uri.', ['@uri' => $this->configuration['uri']]);
     }
     else {
-      return $this->t('The node is associated with taxonomy term with uri @uri.', ['@uri' => $this->configuration['uri']]);
+      return $this->t('The media associated with node is associated with taxonomy term with uri @uri.', ['@uri' => $this->configuration['uri']]);
     }
   }
 
