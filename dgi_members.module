@@ -51,26 +51,29 @@ function dgi_members_views_pre_render(ViewExecutable $view) {
       ($view->id() == 'compound_navigation')
     )
   ) {
+    $members = dgi_members_get_members();
     $k = 0;
     $temp = [];
     $entity_id = (int)$view->argument['field_member_of_target_id']->argument;
-    foreach ($view->result as $key => $value) {
-      if ($k == 0) {
-        $entity = \Drupal::entityTypeManager()
-          ->getStorage('node')
-          ->load($entity_id);
-        $first_result = new $value();
-        $first_result->_entity = $entity;
-        $first_result->index = $k;
-        $first_result->nid = $entity_id;
-        $temp[] = $first_result;
+    if (count($members) > count($view->result) && $members[0] == $entity_id) {
+      foreach ($view->result as $key => $value) {
+        if ($k == 0) {
+          $entity = \Drupal::entityTypeManager()
+            ->getStorage('node')
+            ->load($entity_id);
+          $first_result = new $value();
+          $first_result->_entity = $entity;
+          $first_result->index = $k;
+          $first_result->nid = $entity_id;
+          $temp[] = $first_result;
+          $k++;
+        }
+        $value->index = $k;
+        $temp[] = $value;
         $k++;
       }
-      $value->index = $k;
-      $temp[] = $value;
-      $k++;
+      $view->result = $temp;
     }
-    $view->result = $temp;
   }
 
   if (isset($view) && ($view->id() == 'compound_navigation')) {

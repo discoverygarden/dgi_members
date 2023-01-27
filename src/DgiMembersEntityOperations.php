@@ -172,7 +172,9 @@ class DgiMembersEntityOperations {
       ->condition('field_member_of', $entity->id())
       ->sort('field_weight')
       ->execute();
-    if (dgi_members_treat_parent_as_first_sibling()) {
+    // Special case for showing non-compound compound objects with media as
+    // a member of their own set of nodes.
+    if (dgi_members_treat_parent_as_first_sibling() && !empty($this->islandoraUtils->getMedia($entity))) {
       // Allow current entity to present as the first member of itself.
       array_unshift($to_return, $entity->id());
     }
