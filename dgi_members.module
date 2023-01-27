@@ -207,8 +207,8 @@ function dgi_members_get_members() {
  *   desired.
  */
 function dgi_members_treat_parent_as_first_sibling() {
-  // TEST VALUE SHORTCUT FOR DEV WORK IN PROGRESS.
-  return TRUE;
+  return \Drupal::config('dgi_members.settings')
+    ->get('display_non_compound_compound_as_first_member_of_itself');
 }
 
 /**
@@ -225,6 +225,6 @@ function dgi_members_treat_parent_as_first_sibling() {
  *   (model) field should still be treated as a Compound Object.
  */
 function dgi_members_entity_understood_as_compound(NodeInterface $entity) {
-  // TEST VALUE SHORTCUT FOR DEV WORK IN PROGRESS.
-  return TRUE;
+  return \Drupal::config('dgi_members.settings')
+    ->get('allow_compound_display_for_non_compound');
 }

@@ -104,11 +104,7 @@ class DgiMembersEntityOperations {
             if ($term_info && $term_info['uri'] == DgiMembersEntityOperations::COMPOUND_URI) {
               return TRUE;
             }
-            elseif (
-              dgi_members_treat_parent_as_first_sibling()
-              &&
-              dgi_members_entity_understood_as_compound($entity)
-            ) {
+            elseif (dgi_members_entity_understood_as_compound($entity)) {
               return TRUE;
             }
           }
