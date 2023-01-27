@@ -9,6 +9,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\views\ViewExecutable;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\node\NodeInterface;
+use Drupal\islandora\IslandoraUtils;
 
 /**
  * Implements hook_help().
@@ -54,9 +55,9 @@ function dgi_members_views_pre_render(ViewExecutable $view) {
     $members = dgi_members_get_members();
     $k = 0;
     $temp = [];
-    $entity_id = (int)$view->argument['field_member_of_target_id']->argument;
+    $entity_id = (int) $view->argument['field_member_of_target_id']->argument;
     if (count($members) > count($view->result) && $members[0] == $entity_id) {
-      foreach ($view->result as $key => $value) {
+      foreach ($view->result as $value) {
         if ($k == 0) {
           $entity = \Drupal::entityTypeManager()
             ->getStorage('node')
@@ -220,14 +221,23 @@ function dgi_members_treat_parent_as_first_sibling() {
  * This is related to dgi_members_treat_parent_as_first_sibling(), but could be
  * expanded to be relevant in a separate use case in the future.
  *
- * @param NodeInterface
+ * @param Drupal\node\NodeInterface $entity
+ *   Node to evaluate.
  *
  * @return bool
  *   Default to FALSE for standard Compound Object behaviour.
  *   TRUE if object without the 'Compound Object' value in the 'Content Type'
  *   (model) field should still be treated as a Compound Object.
  */
-function dgi_members_entity_understood_as_compound(NodeInterface $entity) {
-  return \Drupal::config('dgi_members.settings')
+function dgi_members_entity_understood_as_non_compound_compound(NodeInterface $entity) {
+  $allow_this_functionality = \Drupal::config('dgi_members.settings')
     ->get('allow_compound_display_for_non_compound');
+  if ($allow_this_functionality) {
+    $utils = \Drupal::service('islandora.utils');
+    $associated_media = $utils->getMedia($entity);
+    if (!empty($associated_media)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
 }

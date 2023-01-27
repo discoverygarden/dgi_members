@@ -104,7 +104,7 @@ class DgiMembersEntityOperations {
             if ($term_info && $term_info['uri'] == DgiMembersEntityOperations::COMPOUND_URI) {
               return TRUE;
             }
-            elseif (dgi_members_entity_understood_as_compound($entity)) {
+            elseif (dgi_members_entity_understood_as_non_compound_compound($entity)) {
               return TRUE;
             }
           }
@@ -174,7 +174,10 @@ class DgiMembersEntityOperations {
       ->execute();
     // Special case for showing non-compound compound objects with media as
     // a member of their own set of nodes.
-    if (dgi_members_treat_parent_as_first_sibling() && !empty($this->islandoraUtils->getMedia($entity))) {
+    if (
+      dgi_members_treat_parent_as_first_sibling()
+      && dgi_members_entity_understood_as_non_compound_compound($entity)
+    ) {
       // Allow current entity to present as the first member of itself.
       array_unshift($to_return, $entity->id());
     }
