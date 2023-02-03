@@ -1,0 +1,10 @@
+dgi_members.settings:
+  type: config_object
+  label: 'DGI Members Settings'
+  mapping:
+    allow_compound_display_for_non_compound:
+      type: boolean
+      label: 'Allow non-Compound Object nodes to be displayed as Compound Objects.'
+    display_non_compound_compound_as_first_member_of_itself:
+      type: boolean
+      label: 'Display compound non-Compound Object as first member of its set.'

@@ -1,0 +1,2 @@
+allow_compound_display_for_non_compound: FALSE
+display_non_compound_compound_as_first_member_of_itself: FALSE

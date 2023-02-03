@@ -194,7 +194,6 @@ class NodeCompoundCurrentHasTerm extends ConditionPluginBase implements Containe
     }
 
     $data = $this->evaluateEntity($node);
-
     if ($node && $data) {
       return TRUE;
     }
