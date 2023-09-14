@@ -14,7 +14,7 @@ This module requires the following modules/libraries:
 ## Installation
 
 Install as usual, see
-[this](https://drupal.org/documentation/install/modules-themes/modules-8) for
+[this](https://www.drupal.org/docs/extending-drupal/installing-modules) for
 further information.
 
 ## Usage
@@ -34,7 +34,7 @@ view of 'Content: Collection(s)'.
 * Change the 'Pager' settings to only show a specific number of items, 1.
 
 This module will allow switching view modes for the current member of the compound object,
-not just the compound object itself (provided by the menu router). 
+not just the compound object itself (provided by the menu router).
 
 ## Troubleshooting/Issues
 

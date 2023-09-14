@@ -10,8 +10,6 @@ use Drupal\node\NodeInterface;
 use Drupal\taxonomy\TermInterface;
 
 /**
- * Class DgiMembersEntityOperations.
- *
  * Utility service to perform compound object related operations.
  */
 class DgiMembersEntityOperations {
@@ -169,6 +167,7 @@ class DgiMembersEntityOperations {
     $to_return = $this->entityTypeManager
       ->getStorage('node')
       ->getQuery()
+      ->accessCheck()
       ->condition('field_member_of', $entity->id())
       ->sort('field_weight')
       ->execute();
