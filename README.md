@@ -2,8 +2,13 @@
 
 ## Introduction
 
+### Of General Use
+
 Provides a new context condition and logic to allow an objects member to be evaluated based on
 the presence of a given taxonomy term.
+
+### Anticipate Only for DGI
+Hooks that bind to DGI's config and manipulate DGI specific markup.
 
 ## Requirements
 
