@@ -2,4 +2,4 @@ compound_parts:
   js:
     js/compound_parts.js: {}
   dependencies:
-    - core/jquery.once
+    - core/once

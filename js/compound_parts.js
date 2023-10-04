@@ -3,24 +3,31 @@
  * Contains client side logic for dgi_members.
  */
 
-(function ($, Drupal, drupalSettings) {
+(function ($, Drupal, drupalSettings, once) {
   'use strict';
 
   Drupal.behaviors.compound_members = {
-    attach: function (context, settings) {
-      $(document).once('compound_controller_ajax_begin').each(this.ajaxBegin);
-      $(document).once('compound_controller_add_labels').each(this.appendLabels);
-      $(".object-metadata").once('compound_controller_click_callback').each(this.metadataToggleClick);
-      $(document).once('compound_controller_update_active').each(this.updateActiveMetadataDisplay);
-    },
+    attach: function (context) {
+      once('compound-controller', 'body').forEach(() => {
+        Drupal.dgi_members.compound_members.ajaxBegin();
+        Drupal.dgi_members.compound_members.appendLabels();
+        Drupal.dgi_members.compound_members.updateActiveMetadataDisplay();
+      });
+      once('compound-controller-metadata', '.object-metadata', context).forEach((element) => {
+        Drupal.dgi_members.compound_members.metadataToggleClick(element);
+      });
+    }
+  };
 
+  Drupal.dgi_members = Drupal.dgi_members || {};
+  Drupal.dgi_members.compound_members = {
     /**
      * Toggle on or off the ajax spinner.
      */
     toggleSpinner: function () {
-      var toggle_element = ".multi-object-navigation header i";
-      $(toggle_element).toggleClass('visually-hidden');
-      $(".multi-object-navigation .view-content.solr-search-row-content").toggleClass('ajax-active');
+      let $nav = $('.multi-object-navigation');
+      $nav.find("header i").toggleClass('visually-hidden');
+      $nav.find(".view-content.solr-search-row-content").toggleClass('ajax-active');
     },
 
     /**
@@ -29,7 +36,7 @@
     ajaxBegin: function () {
       $(document).ajaxSend(function (event, xhr, settings) {
         if (settings.url.startsWith("/views/ajax?")) {
-          Drupal.behaviors.compound_members.toggleSpinner();
+          Drupal.dgi_members.compound_members.toggleSpinner();
         }
       });
     },
@@ -41,23 +48,28 @@
      *   HTML Markup representing the toggle elements.
      */
     toggleSwitch: function () {
-        return "<span class='metadata-toggle'><a href='#' class='object-metadata part-metadata'>" + Drupal.t("Part") + "</a><a href='#' class='object-metadata element-compound'>" + Drupal.t("Compound") + "</a></span>"
+        return `<span class='metadata-toggle'>
+          <a href='#' class='object-metadata part-metadata'>${Drupal.t("Part")}</a>
+          <a href='#' class='object-metadata element-compound'>${Drupal.t("Compound")}</a>
+        </span>`;
     },
 
     /**
      * Attach click handlers to the different metadata displays.
      */
-    metadataToggleClick: function () {
-      $(this).on('click', function (e) {
+    metadataToggleClick: function (element) {
+      $(element).on('click', function (e) {
         e.preventDefault();
         $('.object-metadata').removeClass('element-active');
 
-        if ($(e.currentTarget).hasClass('element-compound')) {
+        let $current = $(e.currentTarget);
+
+        if ($current.hasClass('element-compound')) {
           $('.element-compound').addClass('element-active');
           $(".compound-member-metadata").addClass('hidden');
           $(".compound-object-metadata").removeClass('hidden');
         }
-        if ($(e.currentTarget).hasClass('part-metadata')) {
+        if ($current.hasClass('part-metadata')) {
           $('.part-metadata').addClass('element-active');
           $(".compound-member-metadata").removeClass('hidden');
           $(".compound-object-metadata").addClass('hidden');
@@ -69,12 +81,8 @@
      * Append the metadata labels to each panel.
      */
     appendLabels: function () {
-      $(".compound-object-metadata").find('.panel-heading').append(
-        Drupal.behaviors.compound_members.toggleSwitch()
-      );
-
-      $(".compound-member-metadata").find('.panel-heading').append(
-        Drupal.behaviors.compound_members.toggleSwitch()
+      $(".compound-object-metadata, .compound-member-metadata").find('.panel-heading').append(
+        Drupal.dgi_members.compound_members.toggleSwitch()
       );
     },
 
@@ -85,17 +93,21 @@
      * including in the compound navigator block and the 'Parts' sidebar block.
      */
     updateActiveMetadataDisplay: function () {
+      const $ec = $('.object-metadata.element-compound');
+      const $pm = $('.object-metadata.part-metadata');
+      const ac = 'element-active';
+
       if (drupalSettings.dgi_members.has_members) {
         $(".compound-object-metadata").addClass('hidden');
-        $('.object-metadata.element-compound').removeClass('element-active');
-        $('.object-metadata.part-metadata').addClass('element-active');
+        $ec.removeClass(ac);
+        $pm.addClass(ac);
       }
       else {
-        $('.object-metadata.element-compound').addClass('element-active');
-        $('.object-metadata.part-metadata').removeClass('element-active');
+        $ec.addClass(ac);
+        $pm.removeClass(ac);
       }
 
-      $(".active-node-" + drupalSettings.dgi_members.active_nid).closest('div.views-row').addClass('active-member');
+      $(`.active-node-${drupalSettings.dgi_members.active_nid}`).closest('div.views-row').addClass('active-member');
     }
   };
-})(jQuery, Drupal, drupalSettings);
+})(jQuery, Drupal, drupalSettings, once);
