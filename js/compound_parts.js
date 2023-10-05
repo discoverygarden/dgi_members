@@ -6,15 +6,42 @@
 (function ($, Drupal, drupalSettings, once) {
   'use strict';
 
-  Drupal.behaviors.compound_members = {
+  Drupal.behaviors.dgi_members_compound_parts = {
     attach: function (context) {
-      once('compound-controller', 'body').forEach(() => {
+      once('dgi_members-compound_controller', 'body').forEach(() => {
         Drupal.dgi_members.compound_members.ajaxBegin();
         Drupal.dgi_members.compound_members.appendLabels();
         Drupal.dgi_members.compound_members.updateActiveMetadataDisplay();
       });
-      once('compound-controller-metadata', '.object-metadata', context).forEach((element) => {
-        Drupal.dgi_members.compound_members.metadataToggleClick(element);
+
+      function _click(e, active_selector, hide_selector, show_selector) {
+        e.preventDefault();
+        $('.object-metadata').removeClass('element-active');
+
+        $(active_selector).addClass('element-active');
+        $(hide_selector).addClass('hidden')
+        $(show_selector).removeClass('hidden');
+      }
+
+      once('dgi_members-compound_controller_metadata-element', '.object-metadata.element-compound', context).forEach((element) => {
+        $(element).on('click', function (e) {
+          _click(
+            e,
+            '.object-metadata.element-compound',
+            ".compound-member-metadata",
+            ".compound-object-metadata",
+          );
+        });
+      });
+      once('dgi_members-compound_controller_metadata-part', '.object-metadata.part-metadata', context).forEach((element) => {
+        $(element).on('click', function (e) {
+          _click(
+            e,
+            '.object-metadata.part-metadata',
+            ".compound-object-metadata",
+            ".compound-member-metadata",
+          );
+        });
       });
     }
   };
@@ -42,47 +69,14 @@
     },
 
     /**
-     * Construct the metadata toggle elements.
-     *
-     * @returns {string}
-     *   HTML Markup representing the toggle elements.
-     */
-    toggleSwitch: function () {
-        return `<span class='metadata-toggle'>
-          <a href='#' class='object-metadata part-metadata'>${Drupal.t("Part")}</a>
-          <a href='#' class='object-metadata element-compound'>${Drupal.t("Compound")}</a>
-        </span>`;
-    },
-
-    /**
-     * Attach click handlers to the different metadata displays.
-     */
-    metadataToggleClick: function (element) {
-      $(element).on('click', function (e) {
-        e.preventDefault();
-        $('.object-metadata').removeClass('element-active');
-
-        let $current = $(e.currentTarget);
-
-        if ($current.hasClass('element-compound')) {
-          $('.element-compound').addClass('element-active');
-          $(".compound-member-metadata").addClass('hidden');
-          $(".compound-object-metadata").removeClass('hidden');
-        }
-        if ($current.hasClass('part-metadata')) {
-          $('.part-metadata').addClass('element-active');
-          $(".compound-member-metadata").removeClass('hidden');
-          $(".compound-object-metadata").addClass('hidden');
-        }
-      });
-    },
-
-    /**
      * Append the metadata labels to each panel.
      */
     appendLabels: function () {
       $(".compound-object-metadata, .compound-member-metadata").find('.panel-heading').append(
-        Drupal.dgi_members.compound_members.toggleSwitch()
+        `<span class='metadata-toggle'>
+          <a href='#' class='object-metadata part-metadata'>${Drupal.t("Part")}</a>
+          <a href='#' class='object-metadata element-compound'>${Drupal.t("Compound")}</a>
+        </span>`
       );
     },
 
