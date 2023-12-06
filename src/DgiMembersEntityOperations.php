@@ -2,17 +2,17 @@
 
 namespace Drupal\dgi_members;
 
-use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\islandora\IslandoraUtils;
 use Drupal\node\NodeInterface;
 use Drupal\taxonomy\TermInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Utility service to perform compound object related operations.
  */
-class DgiMembersEntityOperations {
+class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface {
 
   /**
    * The route match.
@@ -50,18 +50,14 @@ class DgiMembersEntityOperations {
   protected RequestStack $requestStack;
 
   /**
-   * DgiMembersEntityOperations constructor.
-   *
-   * @param \Drupal\Core\Routing\RouteMatchInterface $routeMatch
-   *   Current route match.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   Entity type manager.
-   * @param \Drupal\islandora\IslandoraUtils $islandoraUtils
-   *   Utility functions from islandora core.
-   * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
-   *   Request stack.
+   * Constructor.
    */
-  public function __construct(RouteMatchInterface $routeMatch, EntityTypeManagerInterface $entityTypeManager, IslandoraUtils $islandoraUtils, RequestStack $requestStack) {
+  public function __construct(
+    RouteMatchInterface $routeMatch,
+    EntityTypeManagerInterface $entityTypeManager,
+    IslandoraUtils $islandoraUtils,
+    RequestStack $requestStack,
+  ) {
     $this->routeMatch = $routeMatch;
     $this->entityTypeManager = $entityTypeManager;
     $this->islandoraUtils = $islandoraUtils;
@@ -69,13 +65,9 @@ class DgiMembersEntityOperations {
   }
 
   /**
-   * Confirm the routeMatch node parameter has the 'Compound Object' term.
-   *
-   * @return bool
-   *   TRUE if the current node in the route is a compound object, FALSE
-   *   otherwise.
+   * {@inheritDoc}
    */
-  public function nodeFromRouteIsCompound() {
+  public function nodeFromRouteIsCompound() : bool {
     $entity = $this->routeMatch->getParameter('node');
     if ($entity instanceof NodeInterface) {
       if ($entity->hasField($this->islandoraUtils::MODEL_FIELD) && !$entity->get($this->islandoraUtils::MODEL_FIELD)->isEmpty()) {
@@ -114,15 +106,13 @@ class DgiMembersEntityOperations {
   }
 
   /**
-   * Retrieve the first member of the given object or the node from url param.
-   *
-   * @return bool|NodeInterface
-   *   FALSE if unable to retrieve an active member, or the member if present.
+   * {@inheritDoc}
    */
-  public function retrieveActiveMember($url_param = NULL) {
+  public function retrieveActiveMember($url_param = NULL) : FALSE|NodeInterface {
     if ($url_param) {
       $active_member_param = $this->requestStack->getCurrentRequest()->query->get($url_param);
       if ($active_member_param) {
+        /** @var \Drupal\node\NodeInterface $active_member */
         $active_member = $this->entityTypeManager->getStorage('node')->load($active_member_param);
         if ($active_member) {
           return $active_member;
@@ -136,28 +126,26 @@ class DgiMembersEntityOperations {
   }
 
   /**
-   * Retrieve the first member of the contextual 'Node'.
-   *
-   * @return bool|NodeInterface
-   *   FALSE if the member could not be retrieved, or the member object.
+   * {@inheritDoc}
    */
-  public function retrieveFirstOfMembers() {
-    $nodes = $this->membersQueryExecute();
+  public function retrieveFirstOfMembers() : FALSE|NodeInterface {
+    $node_ids = $this->membersQueryExecute();
 
-    if (empty($nodes)) {
+    if (empty($node_ids)) {
       return FALSE;
     }
 
-    return $this->entityTypeManager->getStorage('node')->load(reset($nodes));
+    $node_id = reset($node_ids);
+    /** @var \Drupal\node\NodeInterface $node */
+    $node = $this->entityTypeManager->getStorage('node')->load($node_id);
+
+    return $node;
   }
 
   /**
-   * Retrieve 'members' of the current page object.
-   *
-   * @return bool|array
-   *   An array of members for the given page object, or FALSE if none found.
+   * {@inheritDoc}
    */
-  public function membersQueryExecute() {
+  public function membersQueryExecute() : array|FALSE {
     $entity = $this->routeMatch->getParameter('node');
 
     if (!$entity) {
