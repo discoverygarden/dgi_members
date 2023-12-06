@@ -73,10 +73,14 @@
      */
     appendLabels: function () {
       $(".compound-object-metadata, .compound-member-metadata").find('.panel-heading').append(
+        // XXX: Drupal's/Squiz coding standards do not presently appears to be
+        // aware of the possibility of template strings in Javascript.
+        // phpcs:disable Squiz.WhiteSpace.OperatorSpacing.NoSpaceBefore,Squiz.WhiteSpace.OperatorSpacing.NoSpaceAfter
         `<span class='metadata-toggle'>
           <a href='#' class='object-metadata part-metadata'>${Drupal.t("Part")}</a>
           <a href='#' class='object-metadata element-compound'>${Drupal.t("Compound")}</a>
         </span>`
+        // phpcs:enable Squiz.WhiteSpace.OperatorSpacing.NoSpaceBefore,Squiz.WhiteSpace.OperatorSpacing.NoSpaceAfter
       );
     },
 
@@ -101,6 +105,9 @@
         $pm.removeClass(ac);
       }
 
+      // XXX: Drupal's/Squiz coding standards do not presently appears to be
+      // aware of the possibility of template strings in Javascript.
+      // phpcs:ignore Squiz.WhiteSpace.OperatorSpacing.NoSpaceBefore,Squiz.WhiteSpace.OperatorSpacing.NoSpaceAfter
       $(`.active-node-${drupalSettings.dgi_members.active_nid}`).closest('div.views-row').addClass('active-member');
     }
   };
