@@ -5,10 +5,10 @@
  * Contains dgi_members.module.
  */
 
-use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\views\ViewExecutable;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\node\NodeInterface;
+use Drupal\views\ViewExecutable;
 
 /**
  * Implements hook_help().
