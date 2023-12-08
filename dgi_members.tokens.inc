@@ -70,6 +70,15 @@ function dgi_members_tokens($type, $tokens, array $data, array $options, Bubblea
   return $output;
 }
 
-function _dgi_members_get_token_name($parameter) {
+/**
+ * Helper; map URL query parameter to placeholder content.
+ *
+ * @param string $parameter
+ *   The URL query parameter to map.
+ *
+ * @return string
+ *   The value as it should be in the token placeholder.
+ */
+function _dgi_members_get_token_name(string $parameter) : string {
   return "dgi_member__{$parameter}";
 }
