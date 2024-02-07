@@ -8,10 +8,34 @@
 
   Drupal.behaviors.dgi_members_compound_parts = {
     attach: function (context) {
-      once('dgi_members-compound_controller', 'body').forEach(() => {
-        Drupal.dgi_members.compound_members.ajaxBegin();
-        Drupal.dgi_members.compound_members.appendLabels();
-        Drupal.dgi_members.compound_members.updateActiveMetadataDisplay();
+      once('dgi_members-compound_controller', '.compound-member-metadata, .compound-object-metadata', context).forEach(() => {
+        $(document).ready(function () {
+          Drupal.dgi_members.compound_members.ajaxBegin();
+          Drupal.dgi_members.compound_members.appendLabels();
+          Drupal.dgi_members.compound_members.updateActiveMetadataDisplay();
+
+          once('dgi_members-compound_controller_metadata-element', '.object-metadata.element-compound', context).forEach((element) => {
+            $(element).on('click', function (e) {
+              _click(
+                e,
+                '.object-metadata.element-compound',
+                ".compound-member-metadata",
+                ".compound-object-metadata"
+              );
+            });
+          });
+
+          once('dgi_members-compound_controller_metadata-part', '.object-metadata.part-metadata', context).forEach((element) => {
+            $(element).on('click', function (e) {
+              _click(
+                e,
+                '.object-metadata.part-metadata',
+                ".compound-object-metadata",
+                ".compound-member-metadata"
+              );
+            });
+          });
+        });
       });
 
       function _click(e, active_selector, hide_selector, show_selector) {
@@ -19,30 +43,9 @@
         $('.object-metadata').removeClass('element-active');
 
         $(active_selector).addClass('element-active');
-        $(hide_selector).addClass('hidden')
+        $(hide_selector).addClass('hidden');
         $(show_selector).removeClass('hidden');
       }
-
-      once('dgi_members-compound_controller_metadata-element', '.object-metadata.element-compound', context).forEach((element) => {
-        $(element).on('click', function (e) {
-          _click(
-            e,
-            '.object-metadata.element-compound',
-            ".compound-member-metadata",
-            ".compound-object-metadata",
-          );
-        });
-      });
-      once('dgi_members-compound_controller_metadata-part', '.object-metadata.part-metadata', context).forEach((element) => {
-        $(element).on('click', function (e) {
-          _click(
-            e,
-            '.object-metadata.part-metadata',
-            ".compound-object-metadata",
-            ".compound-member-metadata",
-          );
-        });
-      });
     }
   };
 
@@ -72,7 +75,7 @@
      * Append the metadata labels to each panel.
      */
     appendLabels: function () {
-      $(".compound-object-metadata, .compound-member-metadata").find('.panel-heading').append(
+      $(".compound-object-metadata, .compound-member-metadata").find('.panel-heading:first').append(
         // XXX: Drupal's/Squiz coding standards do not presently appears to be
         // aware of the possibility of template strings in Javascript.
         // phpcs:disable Squiz.WhiteSpace.OperatorSpacing.NoSpaceBefore,Squiz.WhiteSpace.OperatorSpacing.NoSpaceAfter
