@@ -3,3 +3,5 @@ compound_parts:
     js/compound_parts.js: {}
   dependencies:
     - core/once
+    - core/drupal
+    - core/jquery
