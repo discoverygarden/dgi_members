@@ -112,6 +112,12 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
     if ($url_param) {
       $active_member_param = $this->requestStack->getCurrentRequest()->query->get($url_param);
       if ($active_member_param) {
+        // Check active member is part of the current compound object.
+        $node_ids = $this->membersQueryExecute();
+        if (!in_array($active_member_param, $node_ids)) {
+          return FALSE;
+        }
+
         /** @var \Drupal\node\NodeInterface $active_member */
         $active_member = $this->entityTypeManager->getStorage('node')->load($active_member_param);
         if ($active_member) {
@@ -155,10 +161,11 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
     $to_return = $this->entityTypeManager
       ->getStorage('node')
       ->getQuery()
-      ->accessCheck()
+      ->accessCheck(TRUE)
       ->condition('field_member_of', $entity->id())
       ->sort('field_weight')
       ->execute();
+
     // Special case for showing non-compound compound objects with media as
     // a member of their own set of nodes.
     if (

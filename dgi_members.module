@@ -170,21 +170,7 @@ function dgi_members_entity_is_member(EntityInterface $entity) {
  *   FALSE if no node available, or the active Node.
  */
 function dgi_members_get_active() {
-  $active_member = \Drupal::request()->query->get('active_member');
-  if ($active_member) {
-    return \Drupal::entityTypeManager()->getStorage('node')->load($active_member);
-  }
-
-  if (\Drupal::service('dgi_members.entity_service')->nodeFromRouteIsCompound()) {
-    $nodes = \Drupal::service('dgi_members.entity_service')->membersQueryExecute();
-
-    if (empty($nodes)) {
-      return FALSE;
-    }
-
-    return \Drupal::entityTypeManager()->getStorage('node')->load(reset($nodes));
-  }
-  return FALSE;
+  return \Drupal::service('dgi_members.entity_service')->retrieveActiveMember();
 }
 
 /**
