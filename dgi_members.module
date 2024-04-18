@@ -170,7 +170,8 @@ function dgi_members_entity_is_member(EntityInterface $entity) {
  *   FALSE if no node available, or the active Node.
  */
 function dgi_members_get_active() {
-  return \Drupal::service('dgi_members.entity_service')->retrieveActiveMember();
+  $active_member = \Drupal::request()->query->get('active_member');
+  return \Drupal::service('dgi_members.entity_service')->retrieveActiveMember($active_member);
 }
 
 /**
