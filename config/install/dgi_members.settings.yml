@@ -3,3 +3,4 @@ allow_compound_display_for_non_compound: FALSE
 display_non_compound_compound_as_first_member_of_itself: FALSE
 member_parameters:
   - active_member
+display_compound_object_metadata_by_default: FALSE
