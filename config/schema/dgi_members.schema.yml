@@ -17,4 +17,4 @@ dgi_members.settings:
         label: "A URL query parameter of interest."
     display_compound_object_metadata_by_default:
       type: boolean
-      label: 'Default to displaying the metadata of the compound object rather than the metadata of the active member being viewed."
+      label: 'Default to displaying the metadata of the compound object rather than the metadata of the active member being viewed.'
