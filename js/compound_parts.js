@@ -99,9 +99,16 @@
       const ac = 'element-active';
 
       if (drupalSettings.dgi_members.has_members) {
-        $(".compound-object-metadata").addClass('hidden');
-        $ec.removeClass(ac);
-        $pm.addClass(ac);
+        if (drupalSettings.dgi_members.display_compound_object_metadata) {
+          $(".compound-member-metadata").addClass('hidden');
+          $pm.removeClass(ac);
+          $ec.addClass(ac);
+        }
+        else {
+          $(".compound-object-metadata").addClass('hidden');
+          $ec.removeClass(ac);
+          $pm.addClass(ac);
+        }
       }
       else {
         $ec.addClass(ac);

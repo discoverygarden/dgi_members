@@ -79,6 +79,7 @@ function dgi_members_views_pre_render(ViewExecutable $view) {
   if (isset($view) && ($view->id() == 'compound_navigation')) {
     $members = dgi_members_get_members();
     $active = dgi_members_get_active();
+    $config = \Drupal::config('dgi_members.settings');
 
     if ($active) {
       $active_node_id = $active->id();
@@ -87,6 +88,8 @@ function dgi_members_views_pre_render(ViewExecutable $view) {
         = (empty($members) || !$members) ? FALSE : TRUE;
       $view->element['#attached']['drupalSettings']['dgi_members']['active_nid']
         = $active_node_id;
+      $view->element['#attached']['drupalSettings']['dgi_members']['display_compound_object_metadata']
+        = $config->get('display_compound_object_metadata_by_default') ?? FALSE;
     }
   }
 }
