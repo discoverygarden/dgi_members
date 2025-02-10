@@ -21,10 +21,13 @@ interface DgiMembersEntityOperationsInterface {
   /**
    * Retrieve the first member of the given object or the node from url param.
    *
+   * @param string|null $url_param
+   *   The name of the URL parameter to check.
+   *
    * @return false|\Drupal\node\NodeInterface
    *   FALSE if unable to retrieve an active member, or the member if present.
    */
-  public function retrieveActiveMember($url_param = NULL) : FALSE|NodeInterface;
+  public function retrieveActiveMember(?string $url_param = NULL) : FALSE|NodeInterface;
 
   /**
    * Retrieve the first member of the contextual 'Node'.

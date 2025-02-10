@@ -13,7 +13,7 @@ use Drupal\views\ViewExecutable;
 /**
  * Implements hook_help().
  */
-function dgi_members_help($route_name, RouteMatchInterface $route_match) {
+function dgi_members_help($route_name, RouteMatchInterface $route_match) : string {
   switch ($route_name) {
     // Main module help for the dgi_members module.
     case 'help.page.dgi_members':
@@ -29,7 +29,7 @@ function dgi_members_help($route_name, RouteMatchInterface $route_match) {
 /**
  * Implements hook_views_pre_render().
  */
-function dgi_members_views_pre_render(ViewExecutable $view) {
+function dgi_members_views_pre_render(ViewExecutable $view) : void {
   // XXX: Messing with some views results for displaying non-compound compound
   // objects. This is not generally applicable, but a quick fix kind of
   // adjustment to allow some objects to display similarly to functionality
@@ -39,16 +39,14 @@ function dgi_members_views_pre_render(ViewExecutable $view) {
   if (
     dgi_members_treat_parent_as_first_sibling()
     &&
-    isset($view)
-    &&
     (
       (
-        ($view->id() == 'manage_members')
+        ($view->id() === 'manage_members')
         &&
-        ($view->current_display == 'block_1')
+        ($view->current_display === 'block_1')
       )
       ||
-      ($view->id() == 'compound_navigation')
+      ($view->id() === 'compound_navigation')
     )
   ) {
     $members = dgi_members_get_members();
@@ -76,7 +74,7 @@ function dgi_members_views_pre_render(ViewExecutable $view) {
     }
   }
 
-  if (isset($view) && ($view->id() == 'compound_navigation')) {
+  if ($view->id() === 'compound_navigation') {
     $members = dgi_members_get_members();
     $active = dgi_members_get_active();
     $config = \Drupal::config('dgi_members.settings');
@@ -84,8 +82,7 @@ function dgi_members_views_pre_render(ViewExecutable $view) {
     if ($active) {
       $active_node_id = $active->id();
       $view->element['#attached']['library'][] = 'dgi_members/compound_parts';
-      $view->element['#attached']['drupalSettings']['dgi_members']['has_members']
-        = (empty($members) || !$members) ? FALSE : TRUE;
+      $view->element['#attached']['drupalSettings']['dgi_members']['has_members'] = !(empty($members));
       $view->element['#attached']['drupalSettings']['dgi_members']['active_nid']
         = $active_node_id;
       $view->element['#attached']['drupalSettings']['dgi_members']['display_compound_object_metadata']
@@ -97,7 +94,7 @@ function dgi_members_views_pre_render(ViewExecutable $view) {
 /**
  * Implements hook_form_form_id_alter().
  */
-function dgi_members_form_block_form_alter(&$form, $form_state, $form_id) {
+function dgi_members_form_block_form_alter(&$form, $form_state, $form_id) : void {
   // In following with how Islandora core is handling block visibility,
   // implementing this hook to unset our custom condition. There's too many to
   // use well within the core block placement UI, and no other reasonable way to
@@ -112,7 +109,7 @@ function dgi_members_form_block_form_alter(&$form, $form_state, $form_id) {
 /**
  * Implements hook_entity_view_mode_alter().
  */
-function dgi_members_entity_view_mode_alter(&$view_mode, EntityInterface $entity) {
+function dgi_members_entity_view_mode_alter(&$view_mode, EntityInterface $entity) : void {
   // Change the view mode based on user input from a 'view_mode_alter'.
   // This is very similar to the implementation of this hook in the core
   // islandora module. The difference here is that we are only allowing the view
@@ -120,7 +117,7 @@ function dgi_members_entity_view_mode_alter(&$view_mode, EntityInterface $entity
   // (repository_item_top_viewer), and if the entity (node) being processed
   // differs from the menu route object, evaluations are allowed to continue if
   // said node is a member of the menu router object.
-  if ($view_mode == "repository_item_top_viewer") {
+  if ($view_mode === "repository_item_top_viewer") {
     $storage = \Drupal::service('entity_type.manager')->getStorage('entity_view_mode');
     $context_manager = \Drupal::service('context.manager');
     if (dgi_members_entity_is_member($entity)) {
@@ -156,39 +153,38 @@ function dgi_members_entity_view_mode_alter(&$view_mode, EntityInterface $entity
  * @return bool
  *   TRUE if is a member, FALSE if not.
  */
-function dgi_members_entity_is_member(EntityInterface $entity) {
-  if ($entity) {
-    $members = dgi_members_get_members();
-    if (in_array($entity->id(), $members)) {
-      return TRUE;
-    }
-  }
-  return FALSE;
+function dgi_members_entity_is_member(EntityInterface $entity) : bool {
+  $members = dgi_members_get_members();
+  return $members && in_array($entity->id(), $members, FALSE);
 }
 
 /**
  * Retrieve the active member, if available.
  *
- * @return bool||Node
+ * @return false|\Drupal\node\NodeInterface
  *   FALSE if no node available, or the active Node.
  */
-function dgi_members_get_active() {
+function dgi_members_get_active() : NodeInterface|false {
   $active_member = \Drupal::request()->query->get('active_member');
-  return \Drupal::service('dgi_members.entity_service')->retrieveActiveMember($active_member);
+  /** @var \Drupal\dgi_members\DgiMembersEntityOperationsInterface $service */
+  $service = \Drupal::service('dgi_members.entity_service');
+  return $service->retrieveActiveMember($active_member);
 }
 
 /**
  * Return members of the menu route object.
  *
- * @return bool||array
+ * @return false|array
  *   FALSE if no member available, indexed array of members otherwise.
  */
-function dgi_members_get_members() {
-  return \Drupal::service('dgi_members.entity_service')->membersQueryExecute();
+function dgi_members_get_members() : array|false {
+  /** @var \Drupal\dgi_members\DgiMembersEntityOperationsInterface $service */
+  $service = \Drupal::service('dgi_members.entity_service');
+  return $service->membersQueryExecute();
 }
 
 /**
- * Return whether or not to treat parent as first child.
+ * Return whether to treat parent as first child.
  *
  * This was expected behaviour configurable in i7, and allowing this display
  * option is, in some cases, more desirable than a massive restructuring of
@@ -199,7 +195,7 @@ function dgi_members_get_members() {
  *   TRUE if the capability to treat objects as a member of themselves is
  *   desired.
  */
-function dgi_members_treat_parent_as_first_sibling() {
+function dgi_members_treat_parent_as_first_sibling() : bool {
   return \Drupal::config('dgi_members.settings')
     ->get('display_non_compound_compound_as_first_member_of_itself');
 }
@@ -218,10 +214,12 @@ function dgi_members_treat_parent_as_first_sibling() {
  *   TRUE if object without the 'Compound Object' value in the 'Content Type'
  *   (model) field should still be treated as a Compound Object.
  */
-function dgi_members_entity_understood_as_non_compound_compound(NodeInterface $entity) {
+function dgi_members_entity_understood_as_non_compound_compound(NodeInterface $entity) : bool {
+  /** @var bool $allow_this_functionality */
   $allow_this_functionality = \Drupal::config('dgi_members.settings')
     ->get('allow_compound_display_for_non_compound');
   if ($allow_this_functionality) {
+    /** @var \Drupal\islandora\IslandoraUtils $utils */
     $utils = \Drupal::service('islandora.utils');
     $associated_media = $utils->getMedia($entity);
     if (!empty($associated_media)) {
