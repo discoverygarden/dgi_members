@@ -13,7 +13,7 @@ use Drupal\views\ViewExecutable;
 /**
  * Implements hook_help().
  */
-function dgi_members_help($route_name, RouteMatchInterface $route_match) : string {
+function dgi_members_help($route_name, RouteMatchInterface $route_match) : ?string {
   switch ($route_name) {
     // Main module help for the dgi_members module.
     case 'help.page.dgi_members':
@@ -23,6 +23,7 @@ function dgi_members_help($route_name, RouteMatchInterface $route_match) : strin
       return $output;
 
     default:
+      return NULL;
   }
 }
 
