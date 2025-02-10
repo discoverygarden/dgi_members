@@ -109,9 +109,11 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
    *   The query parameter, if passed.
    *
    * @return false|\Drupal\node\NodeInterface|null
-   *   NULL if no parameter passed or contains an ID we failed to load, FALSE if
-   *   the given parameter does not appear to reference a node in the current
-   *   compound, or a loaded node that is the active member.
+   *   Returns:
+   *   - NULL if no parameter passed or contains an ID we failed to load,
+   *   - FALSE if the given parameter does not appear to reference a node in the
+   *     current compound; or,
+   *   - a loaded node that is the active member.
    */
   private function getActiveMemberFromQueryParameter(?string $query_parameter) : null|false|NodeInterface {
     if (!$query_parameter) {
