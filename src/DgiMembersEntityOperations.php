@@ -114,7 +114,7 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
       if ($active_member_param) {
         // Check active member is part of the current compound object.
         $node_ids = $this->membersQueryExecute();
-        if (!in_array($active_member_param, $node_ids)) {
+        if ($node_ids && !in_array($active_member_param, $node_ids)) {
           return FALSE;
         }
 
@@ -137,7 +137,7 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
   public function retrieveFirstOfMembers() : FALSE|NodeInterface {
     $node_ids = $this->membersQueryExecute();
 
-    if (empty($node_ids)) {
+    if (!$node_ids) {
       return FALSE;
     }
 
