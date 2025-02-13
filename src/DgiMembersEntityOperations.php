@@ -2,7 +2,9 @@
 
 namespace Drupal\dgi_members;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\islandora\IslandoraUtils;
 use Drupal\node\NodeInterface;
@@ -15,27 +17,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface {
 
   /**
-   * The route match.
-   *
-   * @var \Drupal\Core\Routing\RouteMatchInterface
-   */
-  protected RouteMatchInterface $routeMatch;
-
-  /**
-   * Instance of config factory.
-   *
-   * @var \Drupal\islandora\IslandoraUtils
-   */
-  protected IslandoraUtils $islandoraUtils;
-
-  /**
-   * Entity Type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
    * Static compound URI.
    *
    * @var string
@@ -43,25 +24,30 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
   const COMPOUND_URI = "http://vocab.getty.edu/aat/300242735";
 
   /**
-   * Http Request stack.
+   * Model field name.
    *
-   * @var \Symfony\Component\HttpFoundation\RequestStack
+   * @var string
    */
-  protected RequestStack $requestStack;
+  protected string $modelField;
+
+  /**
+   * External URI field name.
+   *
+   * @var string
+   */
+  protected string $externalUriField;
 
   /**
    * Constructor.
    */
   public function __construct(
-    RouteMatchInterface $routeMatch,
-    EntityTypeManagerInterface $entityTypeManager,
-    IslandoraUtils $islandoraUtils,
-    RequestStack $requestStack,
+    protected RouteMatchInterface $routeMatch,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected IslandoraUtils $islandoraUtils,
+    protected RequestStack $requestStack,
   ) {
-    $this->routeMatch = $routeMatch;
-    $this->entityTypeManager = $entityTypeManager;
-    $this->islandoraUtils = $islandoraUtils;
-    $this->requestStack = $requestStack;
+    $this->modelField = $this->islandoraUtils::MODEL_FIELD;
+    $this->externalUriField = $this->islandoraUtils::EXTERNAL_URI_FIELD;
   }
 
   /**
@@ -69,37 +55,35 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
    */
   public function nodeFromRouteIsCompound() : bool {
     $entity = $this->routeMatch->getParameter('node');
-    if ($entity instanceof NodeInterface) {
-      if ($entity->hasField($this->islandoraUtils::MODEL_FIELD) && !$entity->get($this->islandoraUtils::MODEL_FIELD)->isEmpty()) {
+    if (!$entity instanceof NodeInterface) {
+      return FALSE;
+    }
 
-        // Retrieve the 'model' term of the given page entity.
-        $term = $entity
-          ->get($this->islandoraUtils::MODEL_FIELD)
-          ->first()
-          ->get('entity')
-          ->getTarget()
-          ->getValue();
+    if (!self::hasPopulatedField($entity, $this->modelField)) {
+      return FALSE;
+    }
 
-        // Ensure the 'term' is of an instance we expect, exists, and has a
-        // value before proceeding.
-        if ($term instanceof TermInterface) {
-          if ($term->hasField($this->islandoraUtils::EXTERNAL_URI_FIELD) && !$term->get($this->islandoraUtils::EXTERNAL_URI_FIELD)->isEmpty()) {
+    // Retrieve the 'model' term of the given page entity.
+    /** @var \Drupal\taxonomy\TermInterface|null $term */
+    $term = $entity->get($this->modelField)?->first()?->get('entity')->getTarget()->getValue();
 
-            // Retrieve term info for evaluation.
-            $term_info = $term
-              ->get($this->islandoraUtils::EXTERNAL_URI_FIELD)
-              ->first()
-              ->getValue();
+    // Ensure the 'term' is of an instance we expect, exists, and has a
+    // value before proceeding.
+    if (!$term instanceof TermInterface) {
+      return FALSE;
+    }
+    if (!self::hasPopulatedField($term, $this->externalUriField)) {
+      return FALSE;
+    }
 
-            if ($term_info && $term_info['uri'] == DgiMembersEntityOperations::COMPOUND_URI) {
-              return TRUE;
-            }
-            elseif (dgi_members_entity_understood_as_non_compound_compound($entity)) {
-              return TRUE;
-            }
-          }
-        }
-      }
+    // Retrieve term info for evaluation.
+    $term_info = $term->get($this->externalUriField)->first()?->getValue();
+
+    if ($term_info && $term_info['uri'] === static::COMPOUND_URI) {
+      return TRUE;
+    }
+    if (dgi_members_entity_understood_as_non_compound_compound($entity)) {
+      return TRUE;
     }
 
     return FALSE;
@@ -108,22 +92,9 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
   /**
    * {@inheritDoc}
    */
-  public function retrieveActiveMember($url_param = NULL) : FALSE|NodeInterface {
-    if ($url_param) {
-      $active_member_param = $this->requestStack->getCurrentRequest()->query->get($url_param);
-      if ($active_member_param) {
-        // Check active member is part of the current compound object.
-        $node_ids = $this->membersQueryExecute();
-        if (!in_array($active_member_param, $node_ids)) {
-          return FALSE;
-        }
-
-        /** @var \Drupal\node\NodeInterface $active_member */
-        $active_member = $this->entityTypeManager->getStorage('node')->load($active_member_param);
-        if ($active_member) {
-          return $active_member;
-        }
-      }
+  public function retrieveActiveMember(?string $url_param = NULL) : FALSE|NodeInterface {
+    if (($from_param = $this->getActiveMemberFromQueryParameter($url_param)) !== NULL) {
+      return $from_param;
     }
     if ($this->nodeFromRouteIsCompound()) {
       return $this->retrieveFirstOfMembers();
@@ -132,12 +103,49 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
   }
 
   /**
+   * Determine active member based on a passed query parameter.
+   *
+   * @param string|null $query_parameter
+   *   The query parameter, if passed.
+   *
+   * @return false|\Drupal\node\NodeInterface|null
+   *   Returns:
+   *   - NULL if no parameter passed or contains an ID we failed to load,
+   *   - FALSE if the given parameter does not appear to reference a node in the
+   *     current compound; or,
+   *   - a loaded node that is the active member.
+   */
+  private function getActiveMemberFromQueryParameter(?string $query_parameter) : null|false|NodeInterface {
+    if (!$query_parameter) {
+      return NULL;
+    }
+    $active_member_param = $this->requestStack->getCurrentRequest()->query->get($query_parameter);
+    if ($active_member_param === NULL) {
+      return NULL;
+    }
+
+    // Check active member is part of the current compound object.
+    $node_ids = $this->membersQueryExecute();
+    if ($node_ids && !in_array($active_member_param, $node_ids, FALSE)) {
+      return FALSE;
+    }
+
+    /** @var \Drupal\node\NodeInterface $active_member */
+    $active_member = $this->entityTypeManager->getStorage('node')->load($active_member_param);
+    if ($active_member) {
+      return $active_member;
+    }
+
+    return NULL;
+  }
+
+  /**
    * {@inheritDoc}
    */
   public function retrieveFirstOfMembers() : FALSE|NodeInterface {
     $node_ids = $this->membersQueryExecute();
 
-    if (empty($node_ids)) {
+    if (!$node_ids) {
       return FALSE;
     }
 
@@ -177,6 +185,24 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
     }
 
     return $to_return;
+  }
+
+  /**
+   * Helper; determine if the given entity has the given field populated.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity to test.
+   * @param string $field
+   *   The field to test.
+   *
+   * @return bool
+   *   TRUE if the entity is fieldable and has a value in the given field;
+   *   otherwise, FALSE.
+   */
+  private static function hasPopulatedField(EntityInterface $entity, string $field) : bool {
+    return $entity instanceof FieldableEntityInterface &&
+      $entity->hasField($field) &&
+      !$entity->get($field)->isEmpty();
   }
 
 }

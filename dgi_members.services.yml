@@ -2,3 +2,8 @@ services:
   dgi_members.entity_service:
     class: Drupal\dgi_members\DgiMembersEntityOperations
     arguments: ['@current_route_match', '@entity_type.manager', '@islandora.utils', '@request_stack']
+  dgi_members.facet.event_subscriber:
+    class: \Drupal\dgi_members\EventSubscriber\FacetEventSubscriber
+    autowire: true
+    tags:
+      - name: event_subscriber

@@ -10,7 +10,7 @@ use Drupal\Core\Render\BubbleableMetadata;
 /**
  * Implements hook_token_info().
  */
-function dgi_members_token_info() {
+function dgi_members_token_info() : ?array {
   $config = \Drupal::config('dgi_members.settings');
 
   $parameter_tokens = [];
@@ -33,9 +33,9 @@ function dgi_members_token_info() {
 /**
  * Implements hook_tokens().
  */
-function dgi_members_tokens($type, $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata) {
-  if ($type != 'node') {
-    return;
+function dgi_members_tokens($type, $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata) : ?array {
+  if ($type !== 'node') {
+    return NULL;
   }
 
   $output = [];
