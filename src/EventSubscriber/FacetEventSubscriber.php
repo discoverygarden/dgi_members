@@ -51,6 +51,9 @@ class FacetEventSubscriber implements EventSubscriberInterface {
   public function urlCreated(UrlCreated $event) : void {
     $url = $event->getUrl();
     $query = $url->getOption('query');
+    if (!$query) {
+      return;
+    }
     $changed = FALSE;
     foreach ($this->config->get('member_parameters') as $parameter) {
       if (array_key_exists($parameter, $query)) {
