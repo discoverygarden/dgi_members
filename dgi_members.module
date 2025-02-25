@@ -54,7 +54,7 @@ function dgi_members_views_pre_render(ViewExecutable $view) : void {
     $k = 0;
     $temp = [];
     $entity_id = (int) $view->argument['field_member_of_target_id']->argument;
-    if (count($members) > count($view->result) && $members[0] == $entity_id) {
+    if (count($members) > count($view->result) && reset($members) == $entity_id) {
       foreach ($view->result as $value) {
         if ($k == 0) {
           $entity = \Drupal::entityTypeManager()

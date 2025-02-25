@@ -166,6 +166,7 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
       return FALSE;
     }
 
+    // This array ends up with nids for keys and values.
     $to_return = $this->entityTypeManager
       ->getStorage('node')
       ->getQuery()
@@ -182,6 +183,9 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
     ) {
       // Allow current entity to present as the first member of itself.
       array_unshift($to_return, $entity->id());
+      // Keep the array keys and values as nids instead of letting the
+      // array_unshift keys persist.
+      $to_return = array_combine($to_return, $to_return);
     }
 
     return $to_return;
