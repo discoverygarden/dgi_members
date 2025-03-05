@@ -54,7 +54,15 @@ function dgi_members_views_pre_render(ViewExecutable $view) : void {
     $k = 0;
     $temp = [];
     $entity_id = (int) $view->argument['field_member_of_target_id']->argument;
-    if (count($members) > count($view->result) && $members[0] == $entity_id) {
+    // If there are more members than view rows, check if our processing
+    // prepended the compound as a member of itself, and if so, persist that in
+    // the view result display.
+    if (
+      $members
+      && count($members) > $view->total_rows
+      && $view->getCurrentPage() == 0
+      && reset($members) == $entity_id
+    ) {
       foreach ($view->result as $value) {
         if ($k == 0) {
           $entity = \Drupal::entityTypeManager()
@@ -166,10 +174,10 @@ function dgi_members_entity_is_member(EntityInterface $entity) : bool {
  *   FALSE if no node available, or the active Node.
  */
 function dgi_members_get_active() : NodeInterface|false {
-  $active_member = \Drupal::request()->query->get('active_member');
+  $active_member_param = reset(\Drupal::config('dgi_members.settings')->get('member_parameters'));
   /** @var \Drupal\dgi_members\DgiMembersEntityOperationsInterface $service */
   $service = \Drupal::service('dgi_members.entity_service');
-  return $service->retrieveActiveMember($active_member);
+  return $service->retrieveActiveMember($active_member_param);
 }
 
 /**
