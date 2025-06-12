@@ -65,7 +65,7 @@ class DgiMembersEntityOperations implements DgiMembersEntityOperationsInterface 
 
     // Retrieve the 'model' term of the given page entity.
     /** @var \Drupal\taxonomy\TermInterface|null $term */
-    $term = $entity->get($this->modelField)?->first()?->get('entity')->getTarget()->getValue();
+    $term = $entity->get($this->modelField)?->first()?->get('entity')?->getTarget()?->getValue();
 
     // Ensure the 'term' is of an instance we expect, exists, and has a
     // value before proceeding.
