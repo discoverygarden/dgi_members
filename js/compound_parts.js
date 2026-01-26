@@ -8,7 +8,7 @@
 
   Drupal.behaviors.dgi_members_compound_parts = {
     attach: function (context) {
-      once('dgi_members-compound_controller', 'body', context).forEach(() => {
+      once('dgi_members-compound_controller', '.block.block-blockgroup.block-block-groupcompound-metadata', context).forEach(() => {
         $(document).ready(function () {
           Drupal.dgi_members.compound_members.ajaxBegin();
           Drupal.dgi_members.compound_members.appendLabels();
